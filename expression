@@ -1,0 +1,87 @@
+#!/usr/bin/env python
+
+from my_utils.args import parseArgs
+
+import sys
+import ast
+import operator as op
+import re
+
+def main():
+    args = getArgs()
+
+    try:
+        for expression in args.expressions:
+            print(eval_expr(expression))
+
+    except Exception:
+        print("expression: malformed/illegal expression", file=sys.stderr)
+
+#ast parsing
+def eval_expr(expr):
+    return eval_(ast.parse(expr, mode='eval').body)
+
+def eval_(node):
+    # supported operators
+    operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
+             ast.Div: op.truediv, ast.Pow: op.pow, ast.BitXor: op.xor,
+             ast.USub: op.neg}
+
+    if isinstance(node, ast.Num): # <number>
+        return node.n
+    elif isinstance(node, ast.BinOp): # <left> <operator> <right>
+        return operators[type(node.op)](eval_(node.left), eval_(node.right))
+    elif isinstance(node, ast.UnaryOp): # <operator> <operand> e.g., -1
+        return operators[type(node.op)](eval_(node.operand))
+    else:
+        raise TypeError(node)
+
+def getArgs():
+    argExpression = {
+        "flags": "input",
+        "options": {
+            "nargs": "?",
+            "default": None,
+            "help": "The expression to evaluate"
+        }
+    }
+    argPerLine = {
+        "flags": ["-l","--lines"],
+        "options": {
+            "dest": "perLine",
+            "action": "store_true",
+            "help": "Evaluate each line as unique expression"
+        }
+    }
+
+    parserSetup = {
+        "description": "Evaluates a simple math expression using python syntax",
+        "args": [
+            argPerLine,
+            argExpression
+        ]
+    }
+
+    args = parseArgs(parserSetup)
+
+    #read from stdin if no expression is passed
+    if(args.input is None):
+        args.input = sys.stdin.read()
+
+    #default behavior: remove all whitespace, newlines, and tabs
+    regex = r"[\s]*"
+
+    #optional: if perLine option given, remove whitespace but not newlines
+    if args.perLine:
+        regex = r"[ \t]*"
+
+    #perform regex substitution and split on any newlines
+    args.expressions = re.sub(regex,"", args.input).rstrip().split("\n")
+
+    return args
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception:
+        print("expression: an error occured", file=sys.stderr)

@@ -1,0 +1,121 @@
+#!/usr/bin/env python
+
+from my_utils.args import parseArgs
+
+from numpy.random import normal
+import random
+import sys
+
+def main():
+    args = getArgs()
+    function = getFunction(args)
+
+    for i in range(args.length):
+        print(function())
+
+#abstract away which function gets called
+def getFunction(args):
+
+    if(args.normal):
+        return lambda: round(normal(loc=args.mean, scale=args.sd), args.precision)
+
+    if(args.float):
+        return lambda: round(random.uniform(args.min, args.max), args.precision)
+
+    #default behavior is a random integer
+    return lambda: random.randint(args.min, args.max)
+
+def getArgs():
+    argMin = {
+        "flags": "-min",
+        "options": {
+            "default": 0.0,
+            "type": float,
+            "help": "The minimum value, default=0"
+        }
+    }
+    argMax = {
+        "flags": "-max",
+        "options": {
+            "default": 2**32,
+            "type": float,
+            "help": "The maximum value, default=2^32"
+        }
+    }
+    argLength = {
+        "flags": ["-l", "--length"],
+        "options": {
+            "default": 1,
+            "type": int,
+            "help": "The number of values, default=1"
+        }
+    }
+    argFloat = {
+        "flags": ["-f", "--float"],
+        "options": {
+            "action": "store_true",
+            "help": "specifies the value should be a float, otherwise you get integers"
+        }
+    }
+    argPrecision = {
+        "flags": ["-p", "--precision"],
+        "options": {
+            "default": 100,
+            "type": int,
+            "help": "sets the float precision"
+        }
+    }
+    argNormal = {
+        "flags": ["-n", "--normal"],
+        "options": {
+            "action": "store_true",
+            "help": "Use a normal distribution"
+        }
+    }
+    argSD = {
+        "flags": ["-sd", "--standard-deviation"],
+        "options": {
+            "type": float,
+            "default": 1,
+            "dest": "sd",
+            "help": "standard deviation for normal distribution, default=1"
+        }
+    }
+    argMean = {
+        "flags": ["-m", "--mean"],
+        "options": {
+            "type": float,
+            "default": 0,
+            "dest": "mean",
+            "help": "mean value for normal distribution, default=0"
+        }
+    }
+
+    parserSetup = {
+        "description": "Returns a random value",
+        "args": [
+            argMin,
+            argMax,
+            argLength,
+            argFloat,
+            argPrecision,
+            argNormal,
+            argSD,
+            argMean
+        ]
+    }
+
+    args = parseArgs(parserSetup)
+    
+    #validation
+    if(args.max < args.min):
+        print("random: minimum must be smaller than maximum", file=sys.stderr)
+        sys.exit()
+
+    return args
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception:
+        print("random: an error occured", file=sys.stderr)

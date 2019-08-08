@@ -1,0 +1,166 @@
+#!/usr/bin/env python
+
+from my_utils.args import parseArgs
+from my_utils.helpers import files
+from pathlib import Path
+import os
+import re
+import sys
+
+def main():
+
+    args = getArgs()
+
+    processFiles(args)
+
+def processFiles(args):
+
+    for file in files(args.source):
+
+        workingName = file.name
+
+        #optionally clean filename
+        if args.clean:
+            workingName = cleanFilename(file.name)
+
+        #get new path with versioning
+        newPath = versionFile(workingName, args, file)
+
+        #rename file
+        try:
+            os.rename(file.path, newPath)
+
+            #verbose output
+            if args.verbose and file.name != newPath.name:
+                print(f"renamed '{file.name}' to '{newPath.name}'")
+
+        except Exception as e:
+            print(f"error renaming {file.name} to {newPath.name}: {e}", file=sys.stderr)
+
+def cleanFilename(filename):
+
+    cleaningRules = [
+        r"「.*?」",
+        r"【.*?】",
+        r"◤.*?◢",
+        r"\(.*?\)",
+        r"\[.*?\]",
+        r"[↬→❝❞✕|⇢⟿✧]*",
+        r"music video",
+        r"lyrics?",
+        r"(?:official)?(?:audio)?"
+    ]
+
+    #get file name and extension
+    name, extension = os.path.splitext(filename)
+
+    #apply cleaning rules
+    for rule in cleaningRules:
+        tempName = tryRule(tempName, rule)
+
+    tempName = name.strip()
+
+    #create new name
+    newName = tempName + extension
+
+    return newName
+
+def versionFile(filename, args, originalFile):
+
+    #get file name and extension
+    name, extension = os.path.splitext(filename)
+
+    #removes any versioning: [Version #]
+    cleanName = re.sub(r" +\[.*?\]", "", name, flags=re.IGNORECASE)
+
+    #create new path based on given directory
+    newPath = args.destination/f"{cleanName}{extension}"
+
+    #append [Version #] if that filename is already taken
+    count = 1
+    while os.path.exists(newPath):
+
+        #newPath == original path here means no rename is necessary
+        if newPath == Path(originalFile.path):
+            return newPath
+        
+        count += 1
+        newName = f"{cleanName} [Version {count}]{extension}"
+        newPath = args.destination/newName
+
+
+    return newPath
+
+def tryRule(filename, regex):
+    val = re.sub(regex, "", filename, flags=re.IGNORECASE)
+
+    if val == "":
+        return filename
+
+    return val
+
+def getArgs():
+    argClean = {
+        "flags": ["-c", "--clean"],
+        "options": {
+            "action": "store_true",
+            "help": "Clean filenames",
+            "dest": "clean"
+        }
+    }
+    argSource = {
+        "flags": ["-s", "--source"],
+        "options": {
+            "default": Path.cwd(),
+            "type": Path,
+            "dest": "source",
+            "help": "Source folder"
+        }
+    }
+    argDestination = {
+        "flags": ["-d", "--destination"],
+        "options": {
+            "default": Path.cwd(),
+            "type": Path,
+            "dest": "destination",
+            "help": "Destination folder"
+        }
+    }
+    argVerbose = {
+        "flags": ["-v", "--verbose"],
+        "options": {
+            "action": "store_true",
+            "help": "echo changes made to stdout",
+            "dest": "verbose"
+        }
+    }
+    parserSetup = {
+        "description": "Can Clean filenames and merge files from one folder to another",
+        "args": [
+            argClean,
+            argSource,
+            argDestination,
+            argVerbose
+        ]
+    }
+
+    args = parseArgs(parserSetup)
+
+    #validate source
+    if not args.source.is_dir():
+        print(f"managefiles: source is not a directory", file=sys.stderr)
+        sys.exit()
+
+    #validate destination
+    if not args.destination.is_dir():
+        print(f"managefiles: destination is not a directory", file=sys.stderr)
+        sys.exit()
+
+    return args
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as e:
+        print(f"managefiles: an error occured: {e}", file=sys.stderr)

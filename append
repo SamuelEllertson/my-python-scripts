@@ -1,0 +1,158 @@
+#!/usr/bin/env python
+
+from my_utils.args import parseArgs
+import sys
+
+def main():
+    args = getArgs()
+    function = getFunction(args)
+
+    for index, value in enumerate(args.values):
+
+        #if not an index to append to -> just print and move on
+        if index not in args.indexesToUse:
+            print(value)
+            continue
+
+        #otherwise append to the value
+        print(function(value))
+
+#abstract away which function gets called
+def getFunction(args):
+
+    if(args.prepend):
+        return lambda value: f"{args.string}{value}"
+
+    return lambda value: f"{value}{args.string}"
+
+def getArgs():
+    argString = {
+        "flags": "string",
+        "options": {
+            "help": "Value to append",
+        }
+    }
+    argInput = {
+        "flags": "input",
+        "options": {
+            "nargs": "*",
+            "default": [],
+            "help": "The value to append to"
+        }
+    }
+    argPrepend = {
+        "flags": ["-p", "--prepend"],
+        "options": {
+            "action": "store_true",
+            "help": "Prepend value instead",
+        }
+    }
+    argStart = {
+        "flags": ["-b", "--begin"],
+        "options": {
+            "default": 0,
+            "dest": "start",
+            "type": int,
+            "metavar": "int",
+            "help": "Sets line to start appending at. Negative values specify indexes from end of input"
+        }
+    }
+    argEnd = {
+        "flags": ["-e", "--end"],
+        "options": {
+            "default": None,
+            "dest": "end",
+            "type": int,
+            "metavar": "int",
+            "help": "Sets line to stop appending at. Negative values specify indexes from end of input"
+        }
+    }
+    argSkip = {
+        "flags": ["--skip"],
+        "options": {
+            "default": 1,
+            "dest": "skip",
+            "type": int,
+            "metavar": "int",
+            "help": "Sets line skip value. (eg: 2 = every other line) default=1"
+        }
+    }
+    argDelim = {
+        "flags": ["-d", "--delim"],
+        "options": {
+            "default": "\n",
+            "dest": "delim",
+            "metavar": "delimiter",
+            "help": "Sets the delimiter to seperate lines in the input, defaults to newlines"
+        }
+    }
+    argKeepEmpty = {
+        "flags": ["-k", "--keep-empty"],
+        "options": {
+            "dest": "keepEmpty",
+            "action": "store_true",
+            "help": "Keep empty lines / dont filter input"
+        }
+    }
+
+    parserSetup = {
+        "description": "Appends string to value(s). If no input is specified, it reads values from stdin",
+        "args": [
+            argString,
+            argPrepend,
+            argStart,
+            argEnd,
+            argSkip,
+            argKeepEmpty,
+            argDelim,
+            argInput
+        ]
+    }
+
+    args = handleArgs(parseArgs(parserSetup))
+
+    return args
+
+def handleArgs(args):
+
+    #read from stdin if no input supplied
+    if(len(args.input) == 0):
+        args.input = sys.stdin.read().split(args.delim)
+    
+    #default filter: remove empty lines
+    inputFilter = lambda line: line != ""
+
+    #optional filter: keep everything
+    if args.keepEmpty:
+        inputFilter = lambda line: True
+
+    #filter input -> make list
+    args.values = list(filter(inputFilter, args.input))
+
+    #create range object representing which lines to append to
+    start  = args.start
+    end = args.end
+    skip = args.skip
+
+    #start index is negative -> specifying values from end
+    if start < 0:
+        start = len(args.values) + args.start
+
+    #didnt specify end index -> go to the end
+    if end is None:
+        end = len(args.values)
+    
+    #end index is negative -> specifying values from end
+    if end < 0:
+        end = len(args.values) + args.end
+
+
+    args.indexesToUse = range(start, end, skip)
+
+    return args
+
+if __name__ == '__main__':
+    try:
+       main()
+    except Exception as e:
+        print(f"Append: an error occured: {str(e)}", file=sys.stderr)

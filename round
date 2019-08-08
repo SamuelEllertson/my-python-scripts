@@ -1,0 +1,92 @@
+#!/usr/bin/env python
+
+from my_utils.args import parseArgs
+from my_utils.helpers import isFloat
+
+import random
+import sys
+import math
+
+def main():
+    args = getArgs()
+    function = getFunction(args)
+
+    for value in args.values:
+        print(function(value))
+
+#abstract away which function gets called
+def getFunction(args):
+
+    if(args.ceiling):
+        return lambda value: math.ceil(value)
+
+    if(args.floor):
+        return lambda value: math.floor(value)
+
+    if(args.precision is not None):
+        return lambda value: round(value, args.precision)
+
+    return lambda value: round(value)
+
+def getArgs():
+    argPrecision = {
+        "flags": ["-p", "--precision"],
+        "options": {
+            "default": None,
+            "type": int,
+            "help": "Rounds to set precision",
+            "dest": "precision",
+            "metavar": "int"
+        }
+    }
+    argCeiling = {
+        "flags": ["-c", "--ceiling"],
+        "options": {
+            "action": "store_true",
+            "help": "Returns the ceiling of input"
+        }
+    }
+    argFloor = {
+        "flags": ["-f", "--floor"],
+        "options": {
+            "action": "store_true",
+            "help": "Returns the floor of input"
+        }
+    }
+    argInput = {
+        "flags": "input",
+        "options": {
+            "nargs": "*",
+            "default": [],
+            "help": "The value to round"
+        }
+    }
+
+    parserSetup = {
+        "description": "Rounds a value, default behavior is rounding to nearest integer.\
+        If no input is specified, it reads values from stdin",
+        "args": [
+            [argPrecision, argCeiling, argFloor],
+            argInput
+        ],
+        "epilog":"The behavior of round for floats can be surprising: for example, \
+        round -p 2 2.675 gives 2.67 instead of the expected 2.68. This is not a bug, \
+        see https://docs.python.org/3/library/functions.html#round for details"
+    }
+
+    args = parseArgs(parserSetup)
+
+    #read from stdin if no input supplied
+    if(len(args.input) == 0):
+        args.input = sys.stdin.read().split()
+
+    #convert to proper list of values
+    args.values = [float(line) for line in args.input if isFloat(line)]
+
+    return args
+
+if __name__ == '__main__':
+    try:
+       main()
+    except Exception:
+        print("round: an error occured", file=sys.stderr)
