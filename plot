@@ -22,6 +22,9 @@ def getFunction(args):
     if args.type == "bar":
         return bar
 
+    if args.type == "scatter":
+        return scatter
+
     #not really necessary
     return lambda value: None
 
@@ -37,6 +40,37 @@ def bar(args):
     plot.bar(x=xvalues, height=data, width=1)
     autoScaleAndDisplay()
 
+def scatter(args):
+    import re
+
+    #default assumption: data is stream of y values to start at x=0
+    yvalues = args.data
+    xvalues = range(len(yvalues))
+
+    #check if input is in form (or variation of): x, y
+    try:
+        regex = r"^\s*?(\d+)[\s,:]+(\d+)$"
+        testVal = args.input[0]
+
+        if re.search(regex, testVal):
+            
+            #reset lists for new extracted values
+            xvalues = []
+            yvalues = []
+
+            #extract x and y values
+            for line in args.input:
+                vals = re.search(regex, line).groups()
+                
+                xvalues.append(float(vals[0]))
+                yvalues.append(float(vals[1]))
+
+    except Exception as e:
+        raise e
+
+    plot.scatter(x=xvalues, y=yvalues)
+    autoScaleAndDisplay()
+
 def autoScaleAndDisplay():
     plot.autoscale(enable=True, axis='both', tight=True)
     plot.show()
@@ -46,9 +80,8 @@ def getArgs():
         "flags": ["-t", "--type"],
         "options": {
             "default": "histogram",
-            "choices": ["histogram", "bar"],
-            "help": "choose what plot to use",
-            "metavar": "plot"
+            "choices": ["histogram", "bar", "scatter"],
+            "help": "choose what plot to use"
         }
     }
     argBins = {
