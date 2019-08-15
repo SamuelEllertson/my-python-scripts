@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from my_utils.args import parseArgs
 from my_utils.helpers import files
@@ -187,11 +188,9 @@ def getArgs():
 
     return args
 
-
 if __name__ == '__main__':
-    main()
-
     try:
+        sys.stdout.reconfigure(encoding='utf-8')
         main()
     except Exception as e:
         print(f"managefiles: an error occured: {e}", file=sys.stderr)
