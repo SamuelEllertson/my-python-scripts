@@ -21,7 +21,7 @@ def processFiles(args):
 
         #optionally clean filename
         if args.clean:
-            workingName = cleanFilename(file.name)
+            workingName = cleanFilename(workingName)
 
         #get new path with versioning
         newPath = versionFile(workingName, args, file)
@@ -40,30 +40,68 @@ def processFiles(args):
 def cleanFilename(filename):
 
     cleaningRules = [
-        r"「.*?」",
-        r"【.*?】",
-        r"◤.*?◢",
-        r"\(.*?\)",
-        r"\[.*?\]",
-        r"[↬→❝❞✕|⇢⟿✧]*",
-        r"music video",
-        r"lyrics?",
-        r"(?:official)?(?:audio)?"
+        #format: (regex, substitution)
+
+        #delete anything in brackets
+        (r"「.*?」", " "),
+        (r"【.*?】", " "),
+        (r"◤.*?◢", " "),
+        (r"\(.*?\)", " "),
+        (r"\[.*?\]", " "),
+
+        #replacements
+        (r"[_~↬→⇢⟿|]", "-"),
+        (r"[✕✗乂]+", "x"),
+        (r"[`\"]+", "'"),
+
+        #delete these common words
+        (r"music video", " "),
+        (r"lyrics?", " "),
+        (r"(?:\s|^)official(?:\s|$)", " "),
+        (r"(?:\s|^)audio(?:\s|$)", " "),
+        (r"(?:\s|^)HD(?:\s|$)", " "),
+        (r"(?:\s|^)HQ(?:\s|$)", " "),
+        (r"(?:\s|^)Full(?:\s|$)", " "),
+
+        #delete these special characters
+        (r"[❝❞✧🎵♛]+", " "),
+        (r"^[-,.;:/*+ &^$#@!]+", " "),
+        (r"[-,.;:/*+ &^#@!]+$", " "),
+
+        #Fix spaces and dashes
+        (r"-[ -]*-","-"),
+        (r" +"," "),
+        (r"^ +", ""),
+        (r" +$", ""),
     ]
 
     #get file name and extension
-    name, extension = os.path.splitext(filename)
+    name, extension = tempName, _ = os.path.splitext(filename)
 
     #apply cleaning rules
     for rule in cleaningRules:
-        tempName = tryRule(tempName, rule)
-
-    tempName = name.strip()
+        tempName = tryRule(tempName, *rule)
 
     #create new name
     newName = tempName + extension
 
-    return newName
+    #recursively clean until nothing changes
+    if newName == filename:
+        return newName
+    return cleanFilename(newName)
+
+def tryRule(filename, regex, sub):
+    try:
+        val = re.sub(regex, sub, filename, flags=re.IGNORECASE)
+
+        #if a rule deletes everything: ignore it
+        if val == "":
+            return filename
+
+        return val
+    except Exception as e:
+        print(e)
+        return filename
 
 def versionFile(filename, args, originalFile):
 
@@ -88,16 +126,7 @@ def versionFile(filename, args, originalFile):
         newName = f"{cleanName} [Version {count}]{extension}"
         newPath = args.destination/newName
 
-
     return newPath
-
-def tryRule(filename, regex):
-    val = re.sub(regex, "", filename, flags=re.IGNORECASE)
-
-    if val == "":
-        return filename
-
-    return val
 
 def getArgs():
     argClean = {
@@ -160,6 +189,8 @@ def getArgs():
 
 
 if __name__ == '__main__':
+    main()
+
     try:
         main()
     except Exception as e:
