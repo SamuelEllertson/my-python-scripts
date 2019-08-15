@@ -64,8 +64,6 @@ def scatter(args):
             xvalues.append(float(vals[0]))
             yvalues.append(float(vals[1]))
 
-
-
     plot.scatter(x=xvalues, y=yvalues)
     autoScaleAndDisplay()
 
