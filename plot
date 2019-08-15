@@ -64,7 +64,7 @@ def scatter(args):
             xvalues.append(float(vals[0]))
             yvalues.append(float(vals[1]))
 
-    plot.scatter(x=xvalues, y=yvalues)
+    plot.scatter(x=xvalues, y=yvalues, s=[args.markerSize for i in range(len(xvalues))])
     autoScaleAndDisplay()
 
 def autoScaleAndDisplay():
@@ -89,6 +89,15 @@ def getArgs():
             "metavar": "int"
         }
     }
+    argMarkerSize = {
+        "flags": ["-s", "--marker-size"],
+        "options": {
+            "dest": "markerSize",
+            "type":int,
+            "default": 10,
+            "help": "The size of the markers"
+        }
+    }
     argInput = {
         "flags": "input",
         "options": {
@@ -104,6 +113,7 @@ def getArgs():
         "args": [
             argType,
             argBins,
+            argMarkerSize,
             argInput
         ]
     }
