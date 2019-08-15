@@ -48,25 +48,23 @@ def scatter(args):
     xvalues = range(len(yvalues))
 
     #check if input is in form (or variation of): x, y
-    try:
-        regex = r"^\s*?(\d+)[\s,:]+(\d+)$"
-        testVal = args.input[0]
+    regex = r"^[\s(]*?(\d+)[\s,:]+(\d+)[\s)]*?$"
+    testVal = args.input[0]
 
-        if re.search(regex, testVal):
+    if re.search(regex, testVal):
+        
+        #reset lists for new extracted values
+        xvalues = []
+        yvalues = []
+
+        #extract x and y values
+        for line in args.input:
+            vals = re.search(regex, line).groups()
             
-            #reset lists for new extracted values
-            xvalues = []
-            yvalues = []
+            xvalues.append(float(vals[0]))
+            yvalues.append(float(vals[1]))
 
-            #extract x and y values
-            for line in args.input:
-                vals = re.search(regex, line).groups()
-                
-                xvalues.append(float(vals[0]))
-                yvalues.append(float(vals[1]))
 
-    except Exception as e:
-        raise e
 
     plot.scatter(x=xvalues, y=yvalues)
     autoScaleAndDisplay()
