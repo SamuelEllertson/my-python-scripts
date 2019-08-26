@@ -65,7 +65,7 @@ def cleanFilename(filename):
         (r"(?:\s|^)Full(?:\s|$)", " "),
 
         #delete these special characters
-        (r"[❝❞✧🎵♛]+", " "),
+        (r"[❝❞✧🎵♫♛]+", " "),
         (r"^[-,.;:/*+ &^$#@!]+", " "),
         (r"[-,.;:/*+ &^#@!]+$", " "),
 
