@@ -48,21 +48,25 @@ def scatter(args):
     xvalues = range(len(yvalues))
 
     #check if input is in form (or variation of): x, y
-    regex = r"^[\s(]*?(\d+)[\s,:]+(\d+)[\s)]*?$"
-    testVal = args.input[0]
+    regex = r"^[\s(]*?(-{0,1}\d+)[\s,:]+(-{0,1}\d+)[\s)]*?$"
+    testVal = args.raw.split("\n")[0]
 
     if re.search(regex, testVal):
-        
+
         #reset lists for new extracted values
         xvalues = []
         yvalues = []
 
         #extract x and y values
-        for line in args.input:
-            vals = re.search(regex, line).groups()
-            
-            xvalues.append(float(vals[0]))
-            yvalues.append(float(vals[1]))
+        for line in args.raw.split("\n"):
+            result = re.search(regex, line)
+
+            if result:
+                vals = result.groups()
+                xvalues.append(float(vals[0]))
+                yvalues.append(float(vals[1]))
+
+
 
     plot.scatter(x=xvalues, y=yvalues, s=[args.markerSize for i in range(len(xvalues))])
     autoScaleAndDisplay()
@@ -122,7 +126,8 @@ def getArgs():
 
     #read from stdin if no input supplied
     if(len(args.input) == 0):
-        args.input = sys.stdin.read().split()
+        args.raw = sys.stdin.read()
+        args.input = args.raw.split()
 
     #convert to proper list of values
     args.data = [float(line) for line in args.input if isFloat(line)]
@@ -130,7 +135,7 @@ def getArgs():
     return args
 
 if __name__ == '__main__':
-    debug = False
+    debug = True
 
     if debug:
         main()
