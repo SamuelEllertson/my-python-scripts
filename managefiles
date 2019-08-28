@@ -63,6 +63,7 @@ def cleanFilename(filename):
         (r"(?:\s|^)audio(?:\s|$)", " "),
         (r"(?:\s|^)HD(?:\s|$)", " "),
         (r"(?:\s|^)HQ(?:\s|$)", " "),
+        (r"(?:\s|^)MV(?:\s|$)", " "),
         (r"(?:\s|^)Full(?:\s|$)", " "),
 
         #delete these special characters
