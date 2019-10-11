@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+
+from my_utils.args import parseArgs
+
+import sys
+from difflib import get_close_matches
+
+def main():
+    args = getArgs()
+
+    for match in get_close_matches(word=args.word, possibilities=args.wordlist, n=args.num_results, cutoff=args.cutoff)[:args.num_results]:
+        print(match)
+
+def getArgs():
+    argWord = {
+        "flags": ["-w", "--word"],
+        "options": {
+            "required": True,
+            "type": str,
+            "help": "The word to match against",
+            "dest": "word",
+            "metavar": "string"
+        }
+    }
+    argNumReturns = {
+        "flags": ["-n", "--num-results"],
+        "options": {
+            "required": False,
+            "default": 1,
+            "type": int,
+            "help": "How many matches to return. Default=1",
+            "dest": "num_results",
+            "metavar": "int"
+        }
+    }
+    argCutoff = {
+        "flags": ["-c", "--cutoff"],
+        "options": {
+            "required": False,
+            "default": 0.0,
+            "type": float,
+            "help": "Match cutoff point. Range [0,1] Default=0.0 (no cutoff)",
+            "dest": "cutoff",
+            "metavar": "int"
+        }
+    }
+    argWordList = {
+        "flags": "wordlist",
+        "options": {
+            "nargs": "*",
+            "action":"append",
+            "help": "The values to match"
+        }
+    }
+
+    parserSetup = {
+        "description": "Does fuzzy string matching against a list of words, returning the closest matches. Reads from stdin if no wordlist is provided",
+        "args": [
+            argWord,
+            argNumReturns,
+            argCutoff,
+            argWordList
+        ],
+    }
+
+    args = parseArgs(parserSetup)
+
+    #read from stdin if no input supplied
+    if(len(args.wordlist[0]) == 0):
+        args.wordlist = sys.stdin.read().split()
+    else:
+        args.wordlist = args.wordlist[0]
+
+    return args
+
+if __name__ == '__main__':
+    debug = True
+
+    if debug:
+        main()
+        exit()
+
+    try:
+       main()
+    except Exception:
+        print("fuzzymatch: an error occured", file=sys.stderr)
