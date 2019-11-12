@@ -58,6 +58,7 @@ def cleanFilename(filename):
 
         #delete these common words
         (r"music video", " "),
+        (r"original song", " "),
         (r"lyrics?", " "),
         (r"(?:\s|^)official(?:\s|$)", " "),
         (r"(?:\s|^)audio(?:\s|$)", " "),
@@ -67,7 +68,7 @@ def cleanFilename(filename):
         (r"(?:\s|^)Full(?:\s|$)", " "),
 
         #delete these special characters
-        (r"[❝❞✧🎵♫♛❇︎⎛⎠]+", " "),
+        (r"[❝❞“”✧🎵♫♛❇︎⎛⎠]+", " "),
         (r"^[-,.;:/*+ &^$#@!]+", " "),
         (r"[-,.;:/*+ &^#@!]+$", " "),
 
