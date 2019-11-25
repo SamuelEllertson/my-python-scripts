@@ -55,6 +55,7 @@ def cleanFilename(filename):
         (r"[_~↬→⇢⟿|‣]", "-"),
         (r"[✕✗乂]+", "x"),
         (r"[`\"]+", "'"),
+        (r"-", " - "),
 
         #delete these common words
         (r"music video", " "),
